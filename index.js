@@ -1,9 +1,23 @@
 import 'websocket-polyfill'
 import pkg from 'nostr-tools'
+import process from 'node:process'
 
-const relayInit = pkg.relayInit
+const { relayInit, nip19 } = pkg
 
-let pk = 'YOUR_HEX_ENCODED_PUBLIC_KEY_HERE'
+const publicKeyArg = process.argv[2]
+const relayArg = process.argv[3]
+
+if (publicKeyArg === undefined) {
+  console.log('public key is missing as the first argument.')
+  process.exit(1)
+}
+
+if (relayArg === undefined) {
+  console.log('relay is missing as the second argument.')
+  process.exit(1)
+}
+
+let pk = getHexPublicKey(publicKeyArg)
 
 const relayFromUrls = [
   'wss://no.str.cr',
@@ -22,7 +36,7 @@ const relayFromUrls = [
   'wss://nostr.oxtr.dev',
 ]
 
-const relayToUrl = 'TO_RELAY_URL'
+const relayToUrl = relayArg
 
 const eventsReceived = []
 
@@ -73,3 +87,10 @@ relayFromUrls.forEach(async (relayUrl) => {
     })
   })
 })
+
+function getHexPublicKey (publicKeyText) {
+  if (`${publicKeyText}`.match(/[a-f0-9]{64}/)) {
+    return publicKeyText
+  }
+  return nip19.decode(publicKeyText).data
+}
