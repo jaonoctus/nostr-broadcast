@@ -41,11 +41,9 @@ const relayToUrl = relayArg
 const eventsReceived = []
 
 relayFromUrls.forEach(async (relayUrl) => {
-  const relayFrom = relayInit(relayUrl)
-  await relayFrom.connect()
+  const { relay: relayFrom } = await connect(relayUrl)
 
-  const relayTo = relayInit(relayToUrl)
-  await relayTo.connect()
+  const { relay: relayTo } = await connect(relayToUrl)
 
   const eventsToMove = []
 
@@ -93,4 +91,16 @@ function getHexPublicKey (publicKeyText) {
     return publicKeyText
   }
   return nip19.decode(publicKeyText).data
+}
+
+async function connect(relayUrl) {
+  const relay = relayInit(relayUrl)
+
+  try {
+    await relay.connect()
+  } catch (error) {
+    console.error(`could not connect to: ${relayUrl}, skipping.`)
+  }
+
+  return { relay }
 }
