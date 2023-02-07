@@ -10,7 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "nostr-tools": "^1.2.1",
-    "websocket-polyfill": "^0.0.3"
+    "nostr-tools": "1.2.1",
+    "websocket-polyfill": "0.0.3"
   }
 }
