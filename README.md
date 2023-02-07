@@ -16,13 +16,17 @@ npm install
 
 Open `index.js` with your favorite text editor and change to your values as needed.
 
-- YOUR_HEX_ENCODED_PUBLIC_KEY_HERE
-- TO_RELAY_URL
-
 Note, you can also change the values of the `relayFromUrls` array to match your current relay list as desired.
 
 Save the changes to the file then run
 
 ```
-node index.js
+node index.js <YOUR_NOSTR_PUBLIC_KEY> <RELAY_TO_REBROADCAST_URL>
+```
+
+
+## Docker
+
+```
+docker run --rm -it jaonoctus/nostr-rebroadcast <YOUR_NOSTR_PUBLIC_KEY> <RELAY_TO_REBROADCAST_URL>
 ```
