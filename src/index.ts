@@ -1,7 +1,8 @@
 import 'websocket-polyfill'
-import { relayInit, nip19 } from 'nostr-tools'
+import { relayInit } from 'nostr-tools'
 import type { Event } from 'nostr-tools'
 import process from 'node:process'
+import { getHexPublicKey } from './utils'
 
 const publicKeyArg = process.argv[2]
 const relayArg = process.argv[3]
@@ -85,13 +86,6 @@ relayFromUrls.forEach(async (relayUrl) => {
     })
   })
 })
-
-function getHexPublicKey (publicKeyText: string) {
-  if (publicKeyText.match(/[a-f0-9]{64}/)) {
-    return publicKeyText
-  }
-  return `${nip19.decode(publicKeyText).data}`
-}
 
 async function connect(relayUrl: string) {
   const relay = relayInit(relayUrl)

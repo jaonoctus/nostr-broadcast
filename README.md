@@ -15,7 +15,7 @@ npm install
 npm run build
 ```
 
-Open `index.js` with your favorite text editor and change to your values as needed.
+Open `index.ts` with your favorite text editor and change to your values as needed.
 
 Note, you can also change the values of the `relayFromUrls` array to match your current relay list as desired.
 
