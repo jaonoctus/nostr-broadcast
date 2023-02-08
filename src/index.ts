@@ -1,100 +1,82 @@
 import 'websocket-polyfill'
-import { relayInit } from 'nostr-tools'
 import type { Event } from 'nostr-tools'
 import process from 'node:process'
-import { getHexPublicKey } from './utils'
+import {
+  getHexPublicKey,
+  defaultRelayFromUrls,
+  commaSeparatedList,
+  connect,
+  websocketPrefix
+} from './utils'
+import { program } from 'commander'
+import { name, version } from '../package.json'
 
-const publicKeyArg = process.argv[2]
-const relayArg = process.argv[3]
+type ProgramOptions = { pk: string, to: string, from?: string[] }
 
-if (publicKeyArg === undefined) {
-  console.log('public key is missing as the first argument.')
-  process.exit(1)
-}
+program
+  .name(name)
+  .version(version, '-v, --version')
+  .requiredOption('--pk <pk>', 'Nostr public key (hex or npub)', getHexPublicKey)
+  .requiredOption('--to <to>', 'Nostr relay URL to send events (e.g. "wws://destination.nostr.relay")', websocketPrefix)
+  .option('--from <from>', 'Nostr relay URL to fetch events (comma-separated, e.g. "wss://origin1.nostr.relay,wss://origin2.nostr.relay")', commaSeparatedList)
 
-if (relayArg === undefined) {
-  console.log('relay is missing as the second argument.')
-  process.exit(1)
-}
+program.parse()
 
-const pk = getHexPublicKey(publicKeyArg)
+const opts = program.opts<ProgramOptions>()
 
-const relayFromUrls = [
-  'wss://no.str.cr',
-  'wss://paid.no.str.cr',
-  'wss://nostr.fly.dev',
-  'wss://relay.snort.social',
-  'wss://relay.realsearch.cc',
-  'wss://relay.nostrgraph.net',
-  'wss://relay.minds.com/nostr/v1/ws',
-  'wss://nos.lol',
-  'wss://relay.current.fyi',
-  'wss://puravida.nostr.land',
-  'wss://nostr.milou.lol',
-  'wss://eden.nostr.land',
-  'wss://relay.damus.io',
-  'wss://nostr.oxtr.dev',
-]
+async function main() {
+  const eventsReceived: string[] = []
 
-const relayToUrl = relayArg
+  const relayFromUrls = Array.isArray(opts.from) && opts.from.length > 0
+    ? opts.from
+    : defaultRelayFromUrls
 
-const eventsReceived: string[] = []
+  const { relay: relayTo } = await connect({ relayUrl: opts.to, exitIfFail: true })
 
-relayFromUrls.forEach(async (relayUrl) => {
-  const { relay: relayFrom } = await connect(relayUrl)
+  relayFromUrls.forEach(async (relayUrl) => {
+    const { relay: relayFrom } = await connect({ relayUrl })
 
-  const { relay: relayTo } = await connect(relayToUrl)
+    const eventsToMove: Event[] = []
 
-  const eventsToMove: Event[] = []
+    relayFrom.on('connect', () => {
+      console.log(`connected to ${relayFrom.url}`)
+    })
 
-  relayFrom.on('connect', () => {
-    console.log(`connected to ${relayFrom.url}`)
-  })
+    relayTo.on('connect', () => {
+      console.log(`connected to ${relayTo.url}`)
+    })
 
-  relayTo.on('connect', () => {
-    console.log(`connected to ${relayTo.url}`)
-  })
+    const sub = relayFrom.sub([
+      {
+        authors: [opts.pk],
+      }
+    ])
+    sub.on('event', (event: Event) => {
+      if (!event.id) return
+      if(eventsReceived.indexOf(event.id) === -1) {
+        eventsToMove.push(event)
+        eventsReceived.push(event.id)
+      }
+    })
+    sub.on('eose', async () => {
+      sub.unsub()
 
-  const sub = relayFrom.sub([
-    {
-      authors: [pk],
-    }
-  ])
-  sub.on('event', (event: Event) => {
-    if (!event.id) return
-    if(eventsReceived.indexOf(event.id) === -1) {
-      eventsToMove.push(event)
-      eventsReceived.push(event.id)
-    }
-  })
-  sub.on('eose', async () => {
-    sub.unsub()
+      console.log(`got ${eventsToMove.length} events from ${relayFrom.url}`)
 
-    console.log(`got ${eventsToMove.length} events from ${relayFrom.url}`)
+      eventsToMove.forEach(async (event, index) => {
+        const pub = relayTo.publish(event)
+        pub.on('ok', async () => {
+          console.log(`${relayTo.url} has accepted our event from ${relayFrom.url} on ${new Date(event.created_at * 1000).toISOString()} of kind ${event.kind} and ID ${event.id}`)
 
-    eventsToMove.forEach(async (event, index) => {
-      const pub = relayTo.publish(event)
-      pub.on('ok', async () => {
-        console.log(`${relayTo.url} has accepted our event from ${relayFrom.url} on ${new Date(event.created_at * 1000).toISOString()} of kind ${event.kind} and ID ${event.id}`)
-
-        if(index == eventsToMove.length - 1) {
-          console.log(`done with ${relayFrom.url}`)
-          await relayFrom.close()
-          await relayTo.close()
-        }
+          if(index == eventsToMove.length - 1) {
+            console.log(`done with ${relayFrom.url}`)
+            await relayFrom.close()
+            await relayTo.close()
+          }
+        })
       })
     })
   })
-})
-
-async function connect(relayUrl: string) {
-  const relay = relayInit(relayUrl)
-
-  try {
-    await relay.connect()
-  } catch (error) {
-    console.error(`could not connect to: ${relayUrl}, skipping.`)
-  }
-
-  return { relay }
 }
+
+main()
