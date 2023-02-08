@@ -16,7 +16,6 @@
   },
   "devDependencies": {
     "tsup": "6.6.0",
-    "tsx": "3.12.3",
     "vitest": "0.28.4"
   }
 }
