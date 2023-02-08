@@ -1,8 +1,7 @@
 import 'websocket-polyfill'
-import pkg from 'nostr-tools'
+import { relayInit, nip19 } from 'nostr-tools'
+import type { Event } from 'nostr-tools'
 import process from 'node:process'
-
-const { relayInit, nip19 } = pkg
 
 const publicKeyArg = process.argv[2]
 const relayArg = process.argv[3]
@@ -17,7 +16,7 @@ if (relayArg === undefined) {
   process.exit(1)
 }
 
-let pk = getHexPublicKey(publicKeyArg)
+const pk = getHexPublicKey(publicKeyArg)
 
 const relayFromUrls = [
   'wss://no.str.cr',
@@ -38,14 +37,14 @@ const relayFromUrls = [
 
 const relayToUrl = relayArg
 
-const eventsReceived = []
+const eventsReceived: string[] = []
 
 relayFromUrls.forEach(async (relayUrl) => {
   const { relay: relayFrom } = await connect(relayUrl)
 
   const { relay: relayTo } = await connect(relayToUrl)
 
-  const eventsToMove = []
+  const eventsToMove: Event[] = []
 
   relayFrom.on('connect', () => {
     console.log(`connected to ${relayFrom.url}`)
@@ -60,7 +59,8 @@ relayFromUrls.forEach(async (relayUrl) => {
       authors: [pk],
     }
   ])
-  sub.on('event', event => {
+  sub.on('event', (event: Event) => {
+    if (!event.id) return
     if(eventsReceived.indexOf(event.id) === -1) {
       eventsToMove.push(event)
       eventsReceived.push(event.id)
@@ -86,14 +86,14 @@ relayFromUrls.forEach(async (relayUrl) => {
   })
 })
 
-function getHexPublicKey (publicKeyText) {
-  if (`${publicKeyText}`.match(/[a-f0-9]{64}/)) {
+function getHexPublicKey (publicKeyText: string) {
+  if (publicKeyText.match(/[a-f0-9]{64}/)) {
     return publicKeyText
   }
-  return nip19.decode(publicKeyText).data
+  return `${nip19.decode(publicKeyText).data}`
 }
 
-async function connect(relayUrl) {
+async function connect(relayUrl: string) {
   const relay = relayInit(relayUrl)
 
   try {

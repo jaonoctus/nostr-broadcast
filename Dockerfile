@@ -5,6 +5,8 @@ WORKDIR /opt/nostr-broadcast
 COPY package.json package-lock.json ./
 RUN npm ci
 
-COPY index.js entrypoint.sh ./
+COPY entrypoint.sh tsup.config.ts ./
+COPY src/ src/
+RUN npm run build
 
 ENTRYPOINT [ "sh", "entrypoint.sh" ]

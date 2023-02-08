@@ -12,6 +12,7 @@ You must have node.js (18) and npm installed.
 git clone https://github.com/leesalminen/nostr-rebroadcast.git
 cd nostr-rebroadcast
 npm install
+npm run build
 ```
 
 Open `index.js` with your favorite text editor and change to your values as needed.
@@ -21,7 +22,7 @@ Note, you can also change the values of the `relayFromUrls` array to match your 
 Save the changes to the file then run
 
 ```
-node index.js <YOUR_NOSTR_PUBLIC_KEY> <RELAY_TO_REBROADCAST_URL>
+node dist/index.cjs <YOUR_NOSTR_PUBLIC_KEY> <RELAY_TO_REBROADCAST_URL>
 ```
 
 

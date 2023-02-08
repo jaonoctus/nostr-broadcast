@@ -1,3 +1,3 @@
 #!/bin/sh
 
-node index.js $1 $2
+node dist/index.cjs $1 $2
