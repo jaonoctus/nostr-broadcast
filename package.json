@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "build": "tsup src",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "vitest"
   },
   "author": "",
   "license": "ISC",
@@ -16,6 +16,7 @@
   },
   "devDependencies": {
     "tsup": "6.6.0",
-    "tsx": "3.12.3"
+    "tsx": "3.12.3",
+    "vitest": "0.28.4"
   }
 }

@@ -5,4 +5,5 @@ export default defineConfig({
   minify: true,
   clean: true,
   format: ['cjs'],
+  target: 'node18'
 })
