@@ -31,10 +31,9 @@ async function main() {
     ? opts.from
     : defaultRelayFromUrls
 
-  const { relay: relayTo } = await connect({ relayUrl: opts.to, exitIfFail: true })
-
   relayFromUrls.forEach(async (relayUrl) => {
     const { relay: relayFrom } = await connect({ relayUrl })
+    const { relay: relayTo } = await connect({ relayUrl: opts.to, exitIfFail: true })
 
     const eventsToMove: Event[] = []
 
